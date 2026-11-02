@@ -1,0 +1,87 @@
+BIBLIA ORTODOXĂ ÎNTR-UN AN — aplicație (stil iOS / PWA)
+
+INSTALARE PE iPHONE / iPAD (ca aplicație pe ecranul principal)
+--------------------------------------------------------------
+Aplicația e o PWA: se instalează direct din Safari, fără App Store.
+1. Pune folderul BibliaApp online (ex. GitHub Pages, Netlify, sau orice
+   găzduire web) SAU pornește un server local (vezi mai jos) și deschide
+   adresa în Safari pe iPhone.
+2. În Safari apasă butonul „Distribuie” (pătratul cu săgeată ↑).
+3. Alege „Adaugă la ecranul principal” (Add to Home Screen).
+4. Gata: apare o pictogramă cu icoana, iar la deschidere rulează pe tot
+   ecranul, fără bara Safari — ca o aplicație nativă.
+   (Aplicația îți afișează singură un mic reminder cu acești pași în Safari.)
+
+PORNIRE SERVER LOCAL (necesar pentru modul „aplicație” / offline)
+-----------------------------------------------------------------
+Modul PWA (service worker, offline) NU funcționează prin dublu-click pe fișier
+(file://). Pornește un server simplu din folderul BibliaApp:
+   - cu Python:  python -m http.server 8000
+   - apoi deschide:  http://localhost:8000  (pe PC)
+Pe telefon, folosește adresa IP a calculatorului (ex. http://192.168.1.x:8000)
+sau, cel mai comod, publică folderul online (GitHub Pages / Netlify).
+
+NOTĂ: Poți folosi aplicația și simplu, prin dublu-click pe index.html
+(fără instalare) — merge tot, doar că modul offline/„aplicație” cere server.
+
+
+BIBLIA ORTODOXĂ ÎNTR-UN AN — aplicație de citire
+=================================================
+
+CUM SE FOLOSEȘTE
+----------------
+1. Deschide fișierul „index.html” (dublu-click). Se deschide în browser.
+2. Vezi cele 365 de zile, fiecare cu 4 pasaje:
+   - Vechiul Testament
+   - Psalmi
+   - Proverbe (Pilde)
+   - Noul Testament
+3. Apasă butonul „Deschide” de la un pasaj → se deschide un panou din dreapta
+   cu EXACT capitolele din acel pasaj. Fiecare capitol e un buton care duce la
+   pagina oficială Doxologia (https://doxologia.ro). Butonul „Deschide toate
+   capitolele” le deschide pe toate în file noi.
+4. După ce ai citit, bifează căsuța „Văzut” (sau bifa din panoul de lectură).
+   - Când toate cele 4 pasaje ale unei zile sunt bifate, ziua devine „completă”.
+5. Progresul se salvează automat în browser (localStorage) și rămâne și după
+   ce închizi pagina.
+
+FUNCȚII UTILE
+-------------
+- Bara de sus arată: zile complete, pasaje citite, procent, bară de progres.
+- Căutare: scrie un număr de zi (ex. 42) sau o carte (ex. Fc, Mt, Psalm).
+- Filtre: Toate / Necitite / Citite.
+- „Sari la ziua curentă”: te duce la prima zi necitită.
+- „Resetează progresul”: șterge toate bifele (cu confirmare).
+
+ICOANA DIN ANTET
+----------------
+Pentru ca icoana (Sfântul Efrem cel Nou) să apară în antet, salvează imaginea
+în ACEST folder cu numele exact:  icoana.jpg
+(BibliaApp\icoana.jpg). Dacă fișierul lipsește, antetul funcţionează normal,
+doar fără icoană.
+
+FIȘIERE
+-------
+- index.html          → aplicația (deschide acest fișier)
+- icoana.jpg          → icoana din antet + pictograma aplicației
+- manifest.webmanifest→ definiția PWA (nume, pictogramă, mod „standalone”)
+- sw.js               → service worker (funcționare offline)
+- app.js              → logica (parser referințe, cititor, bife)
+- plan.js             → cele 365 de zile (generate din biblia-365-zile.pdf)
+- books.js            → maparea cărților către paginile Doxologia
+- test.html   → pagină de test a parserului (opțional, pentru verificare)
+- tools/      → scripturi Python folosite la generarea datelor (nu sunt necesare
+                pentru rulare)
+
+NOTE
+----
+- Planul este după versiunea Anania (Septuaginta), la fel ca sursa Doxologia,
+  deci numerotarea Psalmilor și cărțile deuterocanonice (Tobit, Iudita,
+  Macabei, Înțelepciune, Sirah etc.) corespund.
+- Pentru pasaje cu versete parțiale (ex. „Ps 1:1–6” sau „In 18:1–27”) se
+  deschide capitolul întreg, iar referința exactă (versetele) e afișată în
+  panou — Doxologia afișează capitolul complet, nu poate sări la un verset.
+- Câteva fragmente scurte (Rugăciunea lui Manasse, Cântarea celor trei tineri,
+  Istoria Susanei, Bel și Balaurul, Epistola lui Ieremia) deschid o căutare pe
+  Doxologia, întrucât nu au pagină proprie de capitol.
+- Necesită conexiune la internet doar când deschizi textul (paginile Doxologia).

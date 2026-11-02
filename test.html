@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<title>Test parser · Biblia într-un an</title>
+<style>
+  body { font-family: Consolas, monospace; padding: 20px; background:#111; color:#ddd; }
+  .ok { color:#6bd66b; } .fail { color:#ff6b6b; font-weight:bold; }
+  h2 { color:#c8a24a; }
+  table { border-collapse: collapse; width:100%; margin-top:10px; }
+  td, th { border:1px solid #333; padding:4px 8px; font-size:13px; text-align:left; }
+  a { color:#7fb2ff; }
+</style>
+</head>
+<body>
+<h1>Test parser referinţe</h1>
+<div id="summary"></div>
+<div id="out"></div>
+
+<script src="books.js"></script>
+<script src="plan.js"></script>
+<script>
+/* Copiem doar funcţiile pure din app.js pentru test (fără DOM). */
+function normalizeDashes(s){return (s||"").replace(/[\u2012\u2013\u2014\u2015]/g,"-").replace(/\s+/g," ").trim();}
+function foldDia(s){return (s||"").replace(/[\u0219\u015F]/g,"s").replace(/[\u021B\u0163]/g,"t").replace(/[\u0218\u015E]/g,"S").replace(/[\u021A\u0162]/g,"T");}
+function splitBook(ref){ref=normalizeDashes(ref);const refF=foldDia(ref);const keys=Object.keys(BOOKS).sort((a,b)=>b.length-a.length);for(const k of keys){const kF=foldDia(k);if(refF===kF)return{abbr:k,rest:""};if(refF.startsWith(kF+" "))return{abbr:k,rest:ref.slice(k.length).trim()};if(refF.startsWith(kF)&&/[0-9]/.test(refF.charAt(kF.length)))return{abbr:k,rest:ref.slice(k.length).trim()};}return{abbr:null,rest:ref};}
+function chaptersFromRest(rest){rest=normalizeDashes(rest);if(!rest)return{chapters:[],verses:""};const blocks=rest.split(/[;,]/).map(s=>s.trim()).filter(Boolean);const chaptersSet=[];const addRange=(a,b)=>{for(let i=a;i<=b;i++)if(!chaptersSet.includes(i))chaptersSet.push(i);};for(const blk of blocks){if(blk.includes("-")){const[left,right]=blk.split("-").map(s=>s.trim());const lc=parseInt(left.split(":")[0],10);const lhv=left.includes(":");const rhv=right?right.includes(":"):false;let rc;if(!right)rc=lc;else if(lhv&&!rhv)rc=lc;else rc=parseInt(right.split(":")[0],10);if(!isNaN(lc)&&!isNaN(rc))addRange(Math.min(lc,rc),Math.max(lc,rc));else if(!isNaN(lc))addRange(lc,lc);}else{const c=parseInt(blk.split(":")[0],10);if(!isNaN(c))addRange(c,c);}}return{chapters:chaptersSet,verses:rest};}
+function interpret(passage,col){passage=normalizeDashes(passage);if(!passage)return null;if(col==="ps"){const{chapters}=chaptersFromRest(passage);return{parts:[{abbr:"Ps",chapters,ref:"Ps "+passage}],raw:passage};}if(col==="pr"){const{chapters}=chaptersFromRest(passage);return{parts:[{abbr:"Pilde",chapters,ref:"Pilde "+passage}],raw:passage};}const chunks=passage.split(/\s+(?:și|si)\s+/i);const parts=[];for(let chunk of chunks){chunk=chunk.trim();const twoBook=chunk.match(/^(.+?)\s*-\s*([A-Za-zĂÂÎŞŢăâîşţ].*)$/);if(twoBook&&splitBook(twoBook[1]).abbr&&splitBook(twoBook[2]).abbr){const b1=splitBook(twoBook[1]);const b2=splitBook(twoBook[2]);const c1=chaptersFromRest(b1.rest);const c2=chaptersFromRest(b2.rest);parts.push({abbr:b1.abbr,chapters:c1.chapters.length?c1.chapters:[1],ref:chunk});parts.push({abbr:b2.abbr,chapters:c2.chapters.length?c2.chapters:[1],ref:""});continue;}const sb=splitBook(chunk);if(sb.abbr){const c=chaptersFromRest(sb.rest);parts.push({abbr:sb.abbr,chapters:c.chapters,ref:chunk});}else{parts.push({abbr:null,chapters:[],ref:chunk});}}return{parts,raw:passage};}
+
+const cases = [
+  ["Fc 4–7","vt",[["Fc",[4,5,6,7]]]],
+  ["Fc 8:1—11:9","vt",[["Fc",[8,9,10,11]]]],
+  ["Fc 24:50—26:35","vt",[["Fc",[24,25,26]]]],
+  ["Fc 27; 28","vt",[["Fc",[27,28]]]],
+  ["1; 2","ps",[["Ps",[1,2]]]],
+  ["9:1–17","ps",[["Ps",[9]]]],
+  ["1:1–6","pr",[["Pilde",[1]]]],
+  ["1Co 10:14—11:1","nt",[["1Co",[10,11]]]],
+  ["Iș 1—3","vt",[["Iş",[1,2,3]]]],
+  ["In 18:1–27","nt",[["In",[18]]]],
+  ["FA 15:22–41","nt",[["FA",[15]]]],
+  ["3 Ezr 1:1—2:11","vt",[["3 Ezr",[1,2]]]],
+  ["1MFA 1:1—2:14","vt",[["1MFA",[1,2]]]],
+  ["2Par 33; 34 și Man","vt",[["2Par",[33,34]],["Man",[]]]],
+  ["Sus 1—Dn 1:21","vt",[["Sus",[1]],["Dn",[1]]]],
+  ["Epist","vt",[["Epist",[]]]],
+  ["Tin","vt",[["Tin",[]]]],
+  ["Bel","vt",[["Bel",[]]]],
+  ["150; 151","ps",[["Ps",[150,151]]]],
+  ["Ap 22","nt",[["Ap",[22]]]],
+  ["Flm","nt",[["Flm",[]]]],
+];
+
+let pass=0, fail=0, rows="";
+for(const [ref,col,exp] of cases){
+  const info=interpret(ref,col);
+  const got=info.parts.map(p=>[p.abbr, p.chapters]);
+  let ok = got.length===exp.length && exp.every((e,i)=>got[i] && got[i][0]===e[0] && JSON.stringify(got[i][1])===JSON.stringify(e[1]));
+  if(ok)pass++;else fail++;
+  const url = info.parts[0].abbr ? chapterUrl(info.parts[0].abbr, (info.parts[0].chapters[0]||1)) : "-";
+  rows += `<tr><td>${ref} <i>(${col})</i></td><td>${JSON.stringify(got)}</td><td>${JSON.stringify(exp)}</td><td class="${ok?'ok':'fail'}">${ok?'OK':'FAIL'}</td><td><a href="${url}" target="_blank">${url}</a></td></tr>`;
+}
+document.getElementById("summary").innerHTML = `<h2>${fail===0?'<span class=ok>TOATE TRECUTE</span>':'<span class=fail>'+fail+' EŞECURI</span>'} — ${pass}/${cases.length}</h2>`;
+document.getElementById("out").innerHTML = `<table><tr><th>Referinţă</th><th>Obţinut [abbr,capitole]</th><th>Aşteptat</th><th>Stare</th><th>URL exemplu</th></tr>${rows}</table>`;
+
+/* verifică şi că toate cărţile din PLAN sunt mapate */
+let missing = new Set();
+for(const d of PLAN){
+  for(const [ref,col] of [[d.vt,"vt"],[d.nt,"nt"]]){
+    const info=interpret(ref,col);
+    for(const p of info.parts){ if(p.abbr===null && p.ref) missing.add(p.ref); }
+  }
+}
+if(missing.size){
+  document.getElementById("out").innerHTML += `<h2 class="fail">Referinţe VT/NT nerecunoscute:</h2><pre>${[...missing].join("\n")}</pre>`;
+} else {
+  document.getElementById("out").innerHTML += `<h2 class="ok">Toate cărţile VT/NT din plan sunt mapate.</h2>`;
+}
+</script>
+</body>
+</html>

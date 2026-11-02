@@ -1,0 +1,17 @@
+{
+  "name": "Biblia Ortodoxă într-un an",
+  "short_name": "Biblia 365",
+  "description": "Plan de citire a Sfintei Scripturi în decurs de un an, versiunea Anania (Septuaginta).",
+  "lang": "ro",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#4e1119",
+  "theme_color": "#5a1420",
+  "icons": [
+    { "src": "icoana.jpg", "sizes": "180x180", "type": "image/jpeg", "purpose": "any" },
+    { "src": "icoana.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
+    { "src": "icoana.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ]
+}

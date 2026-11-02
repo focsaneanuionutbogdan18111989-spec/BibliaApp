@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+<title>Biblia Ortodoxă într-un an</title>
+
+<!-- PWA / iOS -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#5a1420" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Biblia 365" />
+<link rel="apple-touch-icon" href="icoana.jpg" />
+<link rel="icon" href="icoana.jpg" />
+
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --card: #fffdf8;
+    --ink: #2c2620;
+    --muted: #7a6f60;
+    --accent: #8a5a2b;
+    --accent-2: #b58248;
+    --gold: #c8a24a;
+    --byz: #5a1420;
+    --byz-2: #6d1a26;
+    --byz-dk: #4e1119;
+    --vt: #7a5230;
+    --ps: #3f6d8c;
+    --pr: #6b8e4e;
+    --nt: #8c3f4f;
+    --ok: #4b8a3f;
+    --line: #e6ddcb;
+    --shadow: 0 4px 14px rgba(60,45,25,.10);
+    --ios-blur: saturate(180%) blur(20px);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --tabbar-h: 62px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Cambria, Georgia, serif;
+    background: var(--bg); color: var(--ink); line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+  /* aplicația e un „ecran” iOS cu conținut derulabil între antet fix și tab bar */
+  .app { min-height: 100%; display: flex; flex-direction: column; }
+
+  /* ===== Antet bizantin, adaptat iOS (safe-area) ===== */
+  header.top {
+    position: sticky; top: 0; z-index: 20; color: #f7e9c8;
+    padding: calc(14px + var(--safe-top)) 16px 14px;
+    background:
+      radial-gradient(120% 140% at 50% -20%, rgba(200,162,74,.28), rgba(200,162,74,0) 55%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,.04) 0 2px, rgba(0,0,0,.04) 2px 4px),
+      linear-gradient(180deg, var(--byz) 0%, var(--byz-2) 40%, var(--byz-dk) 100%);
+    border-bottom: 3px solid var(--gold);
+    box-shadow: 0 2px 0 #3a0d13, 0 6px 16px rgba(0,0,0,.32);
+  }
+  header.top::after {
+    content: ""; position: absolute; left: 8px; right: 8px; bottom: 6px; top: calc(6px + var(--safe-top));
+    pointer-events: none; border: 1.5px solid rgba(200,162,74,.5);
+    box-shadow: inset 0 0 0 3px rgba(200,162,74,.10); border-radius: 3px;
+  }
+  .head-row { display: flex; align-items: center; gap: 14px; position: relative; }
+  .icon-wrap {
+    flex: 0 0 auto; width: 64px; height: 84px; overflow: hidden; background: #f4ecd8;
+    border: 3px solid var(--gold); outline: 2px solid #7a5a1e; outline-offset: 2px;
+    box-shadow: 0 0 0 1px #3a0d13, 0 4px 12px rgba(0,0,0,.4); border-radius: 4px;
+  }
+  .icon-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .head-text { position: relative; }
+  header.top h1 {
+    margin: 0 0 2px; font-size: 1.35rem; letter-spacing: .3px; line-height: 1.1;
+    font-family: "Cambria", Georgia, "Times New Roman", serif; color: #f6df9e;
+    text-shadow: 0 1px 0 #3a0d13, 0 0 8px rgba(246,223,158,.25);
+  }
+  header.top h1 .cross { color: var(--gold); margin: 0 6px; font-weight: 400; }
+  header.top .sub { font-size: .8rem; color: #e9d6ad; }
+  header.top .sub a { color: #f6df9e; }
+  .ornament { position: relative; height: 2px; margin-top: 8px; max-width: 300px;
+    background: linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent); }
+  .ornament::before { content: "❖"; position: absolute; left: 50%; top: -10px; transform: translateX(-50%); color: var(--gold); font-size: .8rem; }
+
+  .stats { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; align-items: center; color: #f0e2c0; }
+  .stat { font-size: .78rem; }
+  .stat b { font-size: .95rem; color: #f6df9e; }
+  .progress-track { flex: 1 1 160px; min-width: 140px; height: 9px; background: rgba(0,0,0,.28);
+    border: 1px solid rgba(200,162,74,.5); border-radius: 6px; overflow: hidden; }
+  .progress-bar { height: 100%; width: 0; transition: width .3s;
+    background: linear-gradient(90deg, #b58248, var(--gold), #f0d98a); }
+
+  /* ===== Bara de căutare (stil iOS) ===== */
+  .toolbar {
+    position: sticky; top: 0; z-index: 15; padding: 10px 14px;
+    background: rgba(255,253,248,.82); -webkit-backdrop-filter: var(--ios-blur); backdrop-filter: var(--ios-blur);
+    border-bottom: 1px solid var(--line);
+  }
+  .toolbar input[type=search] {
+    width: 100%; padding: 10px 14px; border: none; border-radius: 12px;
+    font-size: 1rem; background: #ececec; color: var(--ink);
+    -webkit-appearance: none; appearance: none;
+  }
+  .toolbar input[type=search]::placeholder { color: #9a9088; }
+
+  /* segmented control iOS pentru filtre */
+  .filters {
+    display: flex; margin-top: 10px; background: #e6e0d3; border-radius: 10px; padding: 3px; gap: 3px;
+  }
+  .filter-btn {
+    flex: 1; border: none; background: transparent; color: var(--ink);
+    padding: 8px 4px; border-radius: 8px; font-size: .9rem; cursor: pointer; font-weight: 600;
+    transition: background .15s, box-shadow .15s;
+  }
+  .filter-btn.active { background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+
+  main { flex: 1 1 auto; padding: 14px 14px calc(var(--tabbar-h) + var(--safe-bottom) + 20px); }
+  .days { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 620px) { .days { grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); } }
+
+  .day-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .day-card.flash { outline: 3px solid var(--gold); }
+  .day-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; background: #f7f0e2; border-bottom: 1px solid var(--line);
+  }
+  .day-num { font-weight: 700; color: var(--accent); font-size: 1.05rem; }
+  .day-badge { font-size: .72rem; color: #fff; background: var(--ok); padding: 3px 10px; border-radius: 20px; opacity: 0; transition: opacity .2s; }
+  .day-card.day-complete .day-badge { opacity: 1; }
+  .day-card.day-complete { border-color: var(--ok); }
+
+  .passage { padding: 12px 16px; border-bottom: 1px solid #f0e9db; }
+  .passage:last-child { border-bottom: none; }
+  .passage-head { display: flex; align-items: center; gap: 12px; }
+
+  /* checkbox stil „toggle” iOS */
+  .passage .vazut { position: absolute; opacity: 0; width: 0; height: 0; }
+  .switch {
+    flex: 0 0 auto; width: 46px; height: 28px; border-radius: 999px; background: #d9d3c6;
+    position: relative; cursor: pointer; transition: background .2s; display: inline-block;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s;
+  }
+  .passage.checked .switch { background: var(--ok); }
+  .passage.checked .switch::after { transform: translateX(18px); }
+
+  .passage-label { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; }
+  .col-tag { font-size: .66rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .ref { font-size: 1rem; font-weight: 600; }
+  .passage.vt .ref { color: var(--vt); }
+  .passage.ps .ref { color: var(--ps); }
+  .passage.pr .ref { color: var(--pr); }
+  .passage.nt .ref { color: var(--nt); }
+  .passage.checked .ref { text-decoration: line-through; opacity: .55; }
+
+  .open-btn {
+    flex: 0 0 auto; border: none; background: var(--accent); color: #fff;
+    border-radius: 999px; padding: 8px 16px; cursor: pointer; font-size: .85rem; font-weight: 600;
+  }
+  .open-btn:active { transform: scale(.96); }
+
+  .empty { text-align: center; color: var(--muted); padding: 40px; }
+
+  /* ===== Tab bar iOS (jos) ===== */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    height: calc(var(--tabbar-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom);
+    display: flex; align-items: stretch;
+    background: rgba(255,253,248,.86); -webkit-backdrop-filter: var(--ios-blur); backdrop-filter: var(--ios-blur);
+    border-top: 1px solid var(--line);
+  }
+  .tab {
+    flex: 1; border: none; background: transparent; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    color: var(--muted); font-size: .68rem; font-weight: 600;
+  }
+  .tab .ico { font-size: 1.25rem; line-height: 1; }
+  .tab.active { color: var(--byz); }
+  .tab.reset { color: #9a3b3b; }
+
+  /* ===== Cititor: foaie modală iOS (urcă de jos) ===== */
+  #overlay { position: fixed; inset: 0; background: rgba(30,22,12,.45); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 40; }
+  #overlay.show { opacity: 1; pointer-events: auto; }
+  #reader {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    height: 88vh; background: var(--card);
+    border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(40,30,15,.35);
+    transform: translateY(100%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+    display: flex; flex-direction: column; padding-bottom: var(--safe-bottom);
+  }
+  #reader.open { transform: translateY(0); }
+  .grabber { width: 40px; height: 5px; border-radius: 3px; background: #d9d3c6; margin: 8px auto 4px; }
+  .reader-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 16px 12px; border-bottom: 1px solid var(--line); }
+  .reader-head h3 { margin: 0; font-size: 1.1rem; color: var(--byz); }
+  #closeReader { background: transparent; border: none; color: var(--accent); font-size: 1rem; font-weight: 600; cursor: pointer; }
+  .reader-body { padding: 16px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .reader-ref { font-weight: 700; color: var(--accent); margin: 0 0 12px; font-size: 1.05rem; }
+  .reader-book { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px dashed var(--line); }
+  .reader-book h4 { margin: 0 0 8px; color: var(--ink); font-size: 1rem; }
+  .chapter-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chapter-link { display: inline-block; padding: 10px 14px; background: #f2ead8; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; color: var(--accent); font-size: .95rem; font-weight: 600; }
+  .chapter-link:active { background: var(--accent); color: #fff; }
+  .open-all-btn { margin-top: 12px; border: none; background: var(--accent); color: #fff; padding: 10px 16px; border-radius: 999px; cursor: pointer; font-size: .9rem; font-weight: 600; }
+  .reader-done { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 14px; background: #f0f6ed; border-radius: 12px; font-weight: 600; cursor: pointer; }
+  .reader-done input { width: 22px; height: 22px; accent-color: var(--ok); }
+
+  footer { text-align: center; color: var(--muted); font-size: .76rem; padding: 16px; }
+
+  /* Buton Reset discret în antet */
+  .reset-pill {
+    margin-left: auto;
+    border: 1px solid rgba(200,162,74,.55);
+    background: rgba(0,0,0,.22);
+    color: #f6df9e;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    letter-spacing: .3px;
+    transition: background .15s, transform .1s;
+  }
+  .reset-pill:hover { background: rgba(0,0,0,.35); }
+  .reset-pill:active { transform: scale(.96); }
+
+  /* Secțiunea Rugăciuni */
+  #prayers { display: none; }
+  #prayers.active { display: grid; gap: 16px; grid-template-columns: 1fr; }
+  @media (min-width: 620px) { #prayers.active { grid-template-columns: repeat(2, 1fr); } }
+  .prayer-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .prayer-head {
+    padding: 14px 16px;
+    background: linear-gradient(180deg, #f7f0e2, #f1e7d1);
+    border-bottom: 2px solid var(--gold);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .prayer-head .pico { font-size: 1.6rem; }
+  .prayer-head h3 {
+    margin: 0;
+    font-family: "Cambria", Georgia, "Times New Roman", serif;
+    font-size: 1.15rem;
+    color: var(--byz);
+  }
+  .prayer-body {
+    padding: 16px;
+    color: var(--ink);
+    font-size: .95rem;
+    display: flex; flex-direction: column; gap: 14px;
+    flex: 1;
+  }
+  .prayer-body p { margin: 0; color: var(--muted); }
+  .prayer-open {
+    align-self: flex-start;
+    text-decoration: none;
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: .9rem;
+  }
+  .prayer-open:active { transform: scale(.97); }
+
+  /* Banner „Adaugă pe ecranul de start” (doar iOS Safari, în tab) */
+  #ios-hint {
+    display: none; position: fixed; left: 12px; right: 12px; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px);
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 60; font-size: .86rem; color: var(--ink);
+  }
+  #ios-hint b { color: var(--byz); }
+  #ios-hint .close { float: right; border: none; background: transparent; font-size: 1rem; cursor: pointer; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="head-row">
+      <div class="icon-wrap">
+        <img src="icoana.jpg" alt="Sfântul Efrem cel Nou" onerror="this.parentNode.style.display='none'" />
+      </div>
+      <div class="head-text">
+        <h1><span class="cross">☩</span>Biblia într-un an<span class="cross">☩</span></h1>
+        <div class="sub">Plan zilnic (15–20 min) ·
+          <a href="https://doxologia.ro/biblia-ortodoxa" target="_blank" rel="noopener">Doxologia</a>
+        </div>
+        <div class="ornament"></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat">Zile: <b id="statDays">0 / 365</b></div>
+      <div class="stat">Pasaje: <b id="statPassages">0 / 1460</b></div>
+      <div class="stat"><b id="statPct">0%</b></div>
+      <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+      <button class="reset-pill" id="btnResetHeader" title="Resetează progresul">↺ Reset</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Caută ziua sau cartea (ex. 42, Fc, Mt)" />
+    <div class="filters">
+      <button class="filter-btn active" data-filter="toate">Toate</button>
+      <button class="filter-btn" data-filter="necitite">Necitite</button>
+      <button class="filter-btn" data-filter="citite">Citite</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="days" id="days"></div>
+    <section id="prayers" aria-label="Rugăciuni">
+      <article class="prayer-card">
+        <div class="prayer-head">
+          <span class="pico">🌅</span>
+          <h3>Rugăciunile dimineții</h3>
+        </div>
+        <div class="prayer-body">
+          <p>Rânduiala rugăciunilor de dimineață, de pe Doxologia.</p>
+          <a class="prayer-open" href="https://doxologia.ro/rugaciunile-diminetii" target="_blank" rel="noopener">Deschide pe Doxologia</a>
+        </div>
+      </article>
+      <article class="prayer-card">
+        <div class="prayer-head">
+          <span class="pico">🌙</span>
+          <h3>Rugăciunile serii</h3>
+        </div>
+        <div class="prayer-body">
+          <p>Rânduiala rugăciunilor de seară, de pe Doxologia.</p>
+          <a class="prayer-open" href="https://doxologia.ro/rugaciunile-serii" target="_blank" rel="noopener">Deschide pe Doxologia</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    Progres salvat automat pe acest dispozitiv · Versiunea Anania (Septuaginta)<br />
+    By <strong>Ionuț Focșaneanu</strong> ·
+    <a href="mailto:ionut_focsaneanu@yahoo.com?subject=Sugestii%20Biblia%20intr-un%20an">ionut_focsaneanu@yahoo.com</a>
+  </footer>
+</div>
+
+<!-- Tab bar iOS -->
+<nav class="tabbar">
+  <button class="tab active" id="tabAll"><span class="ico">📖</span>Toate</button>
+  <button class="tab" id="tabTodo"><span class="ico">🕮</span>Necitite</button>
+  <button class="tab" id="tabToday"><span class="ico">📅</span>Astăzi</button>
+  <button class="tab" id="tabPrayers"><span class="ico">🙏</span>Rugăciuni</button>
+</nav>
+
+<!-- Banner iOS „Adaugă pe ecranul de start” -->
+<div id="ios-hint">
+  <button class="close" id="iosHintClose">×</button>
+  Instalează ca aplicație: apasă <b>Distribuie</b> (□↑) apoi <b>„Adaugă la ecranul principal”</b>.
+</div>
+
+<!-- Cititor (foaie modală) -->
+<div id="overlay"></div>
+<aside id="reader" aria-hidden="true">
+  <div class="grabber"></div>
+  <div class="reader-head">
+    <h3 id="readerTitle">Lectură</h3>
+    <button id="closeReader" title="Închide">Închide</button>
+  </div>
+  <div class="reader-body" id="readerBody"></div>
+</aside>
+
+<script src="books.js"></script>
+<script src="plan.js"></script>
+<script src="app.js"></script>
+<script>
+  /* Înregistrează Service Worker (pentru offline + comportament de aplicație) */
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+  /* Banner iOS: doar în Safari pe iPhone/iPad, când NU rulează deja ca aplicație */
+  (function () {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const standalone = window.navigator.standalone === true ||
+      window.matchMedia("(display-mode: standalone)").matches;
+    if (isIOS && !standalone && !localStorage.getItem("iosHintDismissed")) {
+      const el = document.getElementById("ios-hint");
+      if (el) el.style.display = "block";
+    }
+    const close = document.getElementById("iosHintClose");
+    if (close) close.addEventListener("click", () => {
+      document.getElementById("ios-hint").style.display = "none";
+      localStorage.setItem("iosHintDismissed", "1");
+    });
+  })();
+</script>
+</body>
+</html>
